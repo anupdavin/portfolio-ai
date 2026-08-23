@@ -3,34 +3,59 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { getCinematicProgress, smoothstep } from './sceneChoreography'
 
-export default function ScrollCameraRig() {
-  const cameraCurve = useMemo(
-    () => new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0.15, 0.05, 4.6),
-      new THREE.Vector3(0.0, 0.25, 6.0),
-      new THREE.Vector3(2.4, 0.45, 7.2),
-      new THREE.Vector3(-3.2, 1.15, 8.3),
-      new THREE.Vector3(-1.4, 0.55, 10.2),
-      new THREE.Vector3(0.0, -0.5, 17.8),
-      new THREE.Vector3(4.0, 0.15, 11.0),
-      new THREE.Vector3(0.0, 0.0, 8.6),
-    ], false, 'catmullrom', 0.45),
-    [],
+function makeCurve(points: Array<[number, number, number]>) {
+  return new THREE.CatmullRomCurve3(
+    points.map(([x, y, z]) => new THREE.Vector3(x, y, z)),
+    false,
+    'catmullrom',
+    0.45,
   )
+}
 
-  const lookCurve = useMemo(
-    () => new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(-0.4, 0.05, 0),
-      new THREE.Vector3(-1.6, 0.05, 0),
-      new THREE.Vector3(0, 0.2, -0.5),
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(0, -0.15, 0),
-      new THREE.Vector3(1.8, 0.1, 0),
-      new THREE.Vector3(0, 0, 0),
-    ], false, 'catmullrom', 0.45),
-    [],
-  )
+export default function ScrollCameraRig() {
+  const desktopCameraCurve = useMemo(() => makeCurve([
+    [0.15, 0.05, 4.6],
+    [0, 0.25, 6],
+    [2.4, 0.45, 7.2],
+    [-3.2, 1.15, 8.3],
+    [-1.4, 0.55, 10.2],
+    [0, -0.5, 17.8],
+    [4, 0.15, 11],
+    [0, 0, 8.6],
+  ]), [])
+
+  const mobileCameraCurve = useMemo(() => makeCurve([
+    [0.05, 0.05, 5.8],
+    [0, 0.2, 7],
+    [0.7, 0.25, 8.4],
+    [-0.8, 0.7, 10.2],
+    [-0.4, 0.3, 12.2],
+    [0, -0.25, 20],
+    [1, 0, 13.4],
+    [0, 0, 10.2],
+  ]), [])
+
+  const desktopLookCurve = useMemo(() => makeCurve([
+    [0, 0, 0],
+    [-0.4, 0.05, 0],
+    [-1.6, 0.05, 0],
+    [0, 0.2, -0.5],
+    [0, 0, 0],
+    [0, -0.15, 0],
+    [1.8, 0.1, 0],
+    [0, 0, 0],
+  ]), [])
+
+  const mobileLookCurve = useMemo(() => makeCurve([
+    [0, 0, 0],
+    [-0.2, 0.05, 0],
+    [-0.45, 0.05, 0],
+    [0, 0.1, -0.3],
+    [0, 0, 0],
+    [0, -0.05, 0],
+    [0.5, 0.05, 0],
+    [0, 0, 0],
+  ]), [])
 
   const targetPosition = useRef(new THREE.Vector3())
   const targetLook = useRef(new THREE.Vector3())
@@ -39,8 +64,10 @@ export default function ScrollCameraRig() {
 
   useFrame((state, delta) => {
     const progress = getCinematicProgress()
+    const compact = state.size.width < 768
+    const cameraCurve = compact ? mobileCameraCurve : desktopCameraCurve
+    const lookCurve = compact ? mobileLookCurve : desktopLookCurve
 
-    // Spend a little more scroll time on the close-up origin and accelerate into the scale reveal.
     const directedProgress = progress < 0.58
       ? smoothstep(progress / 0.58) * 0.58
       : 0.58 + smoothstep((progress - 0.58) / 0.42) * 0.42
@@ -49,7 +76,7 @@ export default function ScrollCameraRig() {
     lookCurve.getPointAt(directedProgress, targetLook.current)
 
     const productionReveal = smoothstep((progress - 0.56) / 0.12)
-    const parallaxStrength = THREE.MathUtils.lerp(0.22, 0.08, productionReveal)
+    const parallaxStrength = compact ? 0 : THREE.MathUtils.lerp(0.22, 0.08, productionReveal)
 
     finalPosition.current.set(
       targetPosition.current.x + state.pointer.x * parallaxStrength,
