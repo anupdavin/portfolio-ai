@@ -8,14 +8,16 @@ const outputDir = resolve(root, '.cinematic-review')
 const port = 4173
 const url = `http://127.0.0.1:${port}/portfolio-ai/`
 
+// Sample the authored composition near the first third of each sticky chapter,
+// not the transition-out frame after that chapter has started leaving the viewport.
 const checkpoints = [
-  ['origin', 0.02],
-  ['identity', 0.14],
-  ['workflow', 0.3],
-  ['codebase', 0.5],
-  ['production', 0.68],
-  ['evidence', 0.84],
-  ['human', 0.98],
+  ['origin', 0.01],
+  ['identity', 0.055],
+  ['workflow', 0.255],
+  ['codebase', 0.455],
+  ['production', 0.625],
+  ['evidence', 0.825],
+  ['human', 0.975],
 ]
 
 const sleep = (ms) => new Promise((resolveWait) => setTimeout(resolveWait, ms))
