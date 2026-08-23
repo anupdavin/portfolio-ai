@@ -34,3 +34,14 @@ jobs:
 
       - name: Lint and production build
         run: npm run verify:local
+
+      - name: Capture cinematic review frames
+        run: npm run review:cinematic
+
+      - name: Upload cinematic review frames
+        uses: actions/upload-artifact@v4
+        with:
+          name: cinematic-review
+          path: .cinematic-review
+          if-no-files-found: error
+          retention-days: 7
