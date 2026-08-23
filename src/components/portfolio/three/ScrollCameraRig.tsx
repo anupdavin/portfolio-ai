@@ -1,104 +1,68 @@
-import { useScroll } from 'framer-motion'
+import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { useRef } from 'react'
-
-const SCROLL_THRESHOLDS = [
-  { state: 'ORIGIN', max: 0.05 },
-  { state: 'SYSTEM_INIT', max: 0.15 },
-  { state: 'WORKFLOW', max: 0.35 },
-  { state: 'CODEBASE', max: 0.55 },
-  { state: 'PRODUCTION', max: 0.70 },
-  { state: 'EVIDENCE', max: 0.90 },
-  { state: 'HUMAN', max: 1.0 },
-];
-
-function getCurrentState(progress: number): string {
-  for (const t of SCROLL_THRESHOLDS) {
-    if (progress <= t.max) return t.state;
-  }
-  return 'HUMAN';
-}
+import { getCinematicProgress, smoothstep } from './sceneChoreography'
 
 export default function ScrollCameraRig() {
-  const { scrollYProgress } = useScroll()
-  const vec = useRef(new THREE.Vector3())
-  const lookAtVec = useRef(new THREE.Vector3())
+  const cameraCurve = useMemo(
+    () => new THREE.CatmullRomCurve3([
+      new THREE.Vector3(0.15, 0.05, 4.6),
+      new THREE.Vector3(0.0, 0.25, 6.0),
+      new THREE.Vector3(2.4, 0.45, 7.2),
+      new THREE.Vector3(-3.2, 1.15, 8.3),
+      new THREE.Vector3(-1.4, 0.55, 10.2),
+      new THREE.Vector3(0.0, -0.5, 17.8),
+      new THREE.Vector3(4.0, 0.15, 11.0),
+      new THREE.Vector3(0.0, 0.0, 8.6),
+    ], false, 'catmullrom', 0.45),
+    [],
+  )
 
-  // Track the actual base position without pointer offset for smooth damping
-  const baseTargetPos = useRef(new THREE.Vector3(0, 0, 15))
+  const lookCurve = useMemo(
+    () => new THREE.CatmullRomCurve3([
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(-0.4, 0.05, 0),
+      new THREE.Vector3(-1.6, 0.05, 0),
+      new THREE.Vector3(0, 0.2, -0.5),
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(0, -0.15, 0),
+      new THREE.Vector3(1.8, 0.1, 0),
+      new THREE.Vector3(0, 0, 0),
+    ], false, 'catmullrom', 0.45),
+    [],
+  )
+
+  const targetPosition = useRef(new THREE.Vector3())
+  const targetLook = useRef(new THREE.Vector3())
+  const smoothedLook = useRef(new THREE.Vector3())
+  const finalPosition = useRef(new THREE.Vector3())
 
   useFrame((state, delta) => {
-    const progress = scrollYProgress.get()
-    const currentState = getCurrentState(progress)
-    
-    let targetX = 0
-    let targetY = 0
-    let targetZ = 15
-    
-    let lookX = 0
-    let lookY = 0
+    const progress = getCinematicProgress()
 
-    switch (currentState) {
-      case 'ORIGIN':
-        targetZ = 12
-        break;
-      case 'SYSTEM_INIT':
-        targetZ = 8
-        break;
-      case 'WORKFLOW':
-        targetX = 2
-        targetZ = 8
-        lookX = -2
-        break;
-      case 'CODEBASE':
-        targetX = -4
-        targetY = 2
-        targetZ = 10
-        lookX = 0
-        lookY = 0
-        break;
-      case 'PRODUCTION':
-        targetX = 0
-        targetY = -2
-        targetZ = 18 // Reveal the full scale
-        lookX = 0
-        lookY = 0
-        break;
-      case 'EVIDENCE':
-        targetX = 4
-        targetY = 0
-        targetZ = 12
-        lookX = 2
-        lookY = 0
-        break;
-      case 'HUMAN':
-        targetX = 0
-        targetY = 0
-        targetZ = 12
-        lookX = 0
-        lookY = 0
-        break;
-    }
+    // Spend a little more scroll time on the close-up origin and accelerate into the scale reveal.
+    const directedProgress = progress < 0.58
+      ? smoothstep(progress / 0.58) * 0.58
+      : 0.58 + smoothstep((progress - 0.58) / 0.42) * 0.42
 
-    // Determine the base target
-    baseTargetPos.current.lerp(new THREE.Vector3(targetX, targetY, targetZ), delta * 2.0)
-    
-    // Add subtle parallax from pointer, bounded
-    const pointerOffsetX = state.pointer.x * 0.5;
-    const pointerOffsetY = state.pointer.y * 0.5;
-    
-    vec.current.set(
-      baseTargetPos.current.x + pointerOffsetX,
-      baseTargetPos.current.y + pointerOffsetY,
-      baseTargetPos.current.z
+    cameraCurve.getPointAt(directedProgress, targetPosition.current)
+    lookCurve.getPointAt(directedProgress, targetLook.current)
+
+    const productionReveal = smoothstep((progress - 0.56) / 0.12)
+    const parallaxStrength = THREE.MathUtils.lerp(0.22, 0.08, productionReveal)
+
+    finalPosition.current.set(
+      targetPosition.current.x + state.pointer.x * parallaxStrength,
+      targetPosition.current.y + state.pointer.y * parallaxStrength,
+      targetPosition.current.z,
     )
 
-    state.camera.position.lerp(vec.current, delta * 3.0)
-    lookAtVec.current.lerp(new THREE.Vector3(lookX, lookY, 0), delta * 2.5)
-    
-    state.camera.lookAt(lookAtVec.current)
+    const cameraDamping = 1 - Math.exp(-delta * 3.8)
+    const lookDamping = 1 - Math.exp(-delta * 4.6)
+    state.camera.position.lerp(finalPosition.current, cameraDamping)
+    smoothedLook.current.lerp(targetLook.current, lookDamping)
+    state.camera.lookAt(smoothedLook.current)
   })
-  
+
   return null
 }
