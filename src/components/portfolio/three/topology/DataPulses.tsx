@@ -59,7 +59,15 @@ export default function DataPulses({
   })
 
   return (
-    <instancedMesh ref={meshRef} args={[undefined, undefined, count]} frustumCulled={false}>
+    <instancedMesh
+      ref={meshRef}
+      args={[
+        undefined as unknown as THREE.BufferGeometry,
+        undefined as unknown as THREE.Material,
+        count,
+      ]}
+      frustumCulled={false}
+    >
       <sphereGeometry args={[1, 6, 6]} />
       <meshBasicMaterial color="#d9f99d" transparent opacity={0.72} depthWrite={false} />
     </instancedMesh>
