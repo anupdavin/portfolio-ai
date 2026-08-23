@@ -1,71 +1,71 @@
-import React from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Outlet } from 'react-router-dom'
 import ChatWidget from '@/components/ChatWidget'
 
-export default function Layout({ children }: { children?: React.ReactNode }) {
+const NAV_LINKS = [
+  { label: 'PROCESS', href: '#workflow' },
+  { label: 'ARCHITECTURE', href: '#codebase' },
+  { label: 'EVIDENCE', href: '#case-studies' },
+  { label: 'EXPERIENCE', href: '#experience' },
+  { label: 'CONTACT', href: '#contact' },
+] as const
+
+export default function Layout({ children }: { children?: ReactNode }) {
+  const [showChat, setShowChat] = useState(false)
+
+  useEffect(() => {
+    const update = () => {
+      const human = document.getElementById('human')
+      setShowChat(Boolean(human && window.scrollY >= human.offsetTop - window.innerHeight * 0.35))
+    }
+
+    update()
+    window.addEventListener('scroll', update, { passive: true })
+    window.addEventListener('resize', update)
+    return () => {
+      window.removeEventListener('scroll', update)
+      window.removeEventListener('resize', update)
+    }
+  }, [])
+
   return (
-    <div className="min-h-screen bg-black text-green-400 font-mono overflow-x-hidden">
-      <div className="fixed inset-0 z-0 opacity-10">
-        <div className="matrix-bg h-full w-full"></div>
-      </div>
+    <div className="min-h-screen bg-[#020203] text-white overflow-x-hidden selection:bg-lime-200 selection:text-black">
+      <header className="fixed inset-x-0 top-0 z-50 pointer-events-none bg-gradient-to-b from-black/75 via-black/20 to-transparent">
+        <div className="max-w-[1500px] mx-auto px-5 md:px-8 h-16 flex items-center justify-between">
+          <a
+            href="#origin"
+            className="pointer-events-auto font-mono text-[9px] md:text-[10px] uppercase tracking-[0.24em] text-white/58 hover:text-white transition-colors"
+          >
+            AD <span className="text-white/20">/</span> SYSTEMS
+          </a>
 
-      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-sm bg-black/80 border-b border-green-400/20">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
-            <div className="text-xl font-bold text-green-400 glow-text">
-              &lt;DevPortfolio/&gt;
-            </div>
-            <div className="hidden md:flex space-x-8">
-              {[
-                { label: 'Home', href: '#hero' },
-                { label: 'About', href: '#about' },
-                { label: 'Skills', href: '#skills' },
-                { label: 'Projects', href: '#projects' },
-                { label: 'Experience', href: '#experience' },
-                { label: 'Contact', href: '#contact' },
-              ].map((link) => (
-                <a key={link.label} href={link.href} className="text-gray-300 hover:text-green-400 transition-all duration-300 hover:glow-text">
-                  {link.label}
-                </a>
-              ))}
-            </div>
-            <div className="text-sm text-gray-500">$ whoami</div>
-          </div>
+          <nav className="pointer-events-auto hidden md:flex items-center gap-7" aria-label="Portfolio navigation">
+            {NAV_LINKS.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                className="font-mono text-[8px] uppercase tracking-[0.2em] text-white/28 hover:text-white/75 transition-colors"
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
+
+          <a
+            href="#contact"
+            className="pointer-events-auto md:hidden font-mono text-[8px] uppercase tracking-[0.2em] text-white/34"
+          >
+            CONTACT ↘
+          </a>
         </div>
-      </nav>
+      </header>
 
-      <main className="relative z-10 pt-20">
+      <main className="relative z-10">
         {children}
         <Outlet />
       </main>
 
-      {/* Chatbot */}
-      <ChatWidget />
-
-      <style>{`
-        .glow-text { text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor; }
-        .glow-border { box-shadow: 0 0 10px rgba(34, 197, 94, 0.3), inset 0 0 10px rgba(34, 197, 94, 0.1); }
-        .matrix-bg {
-          background: linear-gradient(90deg, transparent 98%, #22c55e 100%), linear-gradient(180deg, transparent 98%, #22c55e 100%);
-          background-size: 50px 50px; animation: matrix-move 20s linear infinite;
-        }
-        @keyframes matrix-move { 0% { transform: translate(0, 0); } 100% { transform: translate(-50px, -50px); } }
-        @keyframes terminal-blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
-        .terminal-cursor::after { content: '█'; color: #22c55e; animation: terminal-blink 1s infinite; }
-        .code-block { background: rgba(0,0,0,.8); border: 1px solid rgba(34,197,94,.3); backdrop-filter: blur(10px); }
-        @keyframes float { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-20px); } }
-        .floating-element { animation: float 6s ease-in-out infinite; }
-        
-        /* Hide scrollbar but keep functionality */
-        * {
-          scrollbar-width: none; /* Firefox */
-          -ms-overflow-style: none; /* IE and Edge */
-        }
-        *::-webkit-scrollbar {
-          display: none; /* Chrome, Safari, Opera */
-        }
-      `}</style>
+      {showChat && <ChatWidget />}
     </div>
   )
 }
-
