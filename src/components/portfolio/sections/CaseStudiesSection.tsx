@@ -1,111 +1,62 @@
 import { motion } from 'framer-motion'
-import { Server, Zap, BrainCircuit } from 'lucide-react'
 
 const CASES = [
   {
-    title: 'Person MDM Modernization',
-    type: 'Production Experience',
-    icon: Server,
-    legacy: 'EBX / JBoss / JDK 8',
-    modern: 'EBX 6.2.x / Tomcat / JDK 21 / Kubernetes',
-    focus: [
-      'runtime modernization',
-      'Jakarta migration',
-      'dependency governance',
-      'Maven',
-      'container deployment',
-      'readiness checks',
-      'security gates'
-    ]
+    type: 'Production experience',
+    title: 'Person MDM modernization',
+    signal: 'JDK 8  →  JDK 21',
+    detail: 'EBX / JBoss legacy runtime toward Tomcat, Maven, Jakarta and Kubernetes delivery.',
   },
   {
-    title: 'Event-Driven Reconciliation',
-    type: 'Production Experience',
-    icon: Zap,
-    legacy: 'Batch Processing',
-    modern: 'multi-hour reconciliation → under 20 minutes',
-    focus: [
-      'Kafka',
-      'CDC',
-      'idempotency',
-      'outbox',
-      'saga patterns'
-    ]
+    type: 'Production experience',
+    title: 'Event-driven reconciliation',
+    signal: 'multi-hour  →  <20 min',
+    detail: 'Kafka, CDC, idempotency, outbox and saga-oriented recovery patterns.',
   },
   {
-    title: 'Grounded Knowledge Assistant',
-    type: 'Portfolio Lab',
-    icon: BrainCircuit,
-    legacy: 'Architecture',
-    modern: 'Question → Retrieval → Evidence → Generation → Evaluation',
-    focus: [
-      'Sources required',
-      'No evidence → abstain',
-      'Prompt-injection tests',
-      'Local-first mode'
-    ]
-  }
-]
+    type: 'Portfolio lab',
+    title: 'Grounded knowledge assistant',
+    signal: 'evidence  →  answer  →  evaluate',
+    detail: 'Retrieval, source requirements, abstention and prompt-injection evaluation.',
+  },
+] as const
 
 export default function CaseStudiesSection() {
   return (
-    <section id="case-studies" className="min-h-screen py-32 px-6 relative z-10 flex flex-col justify-center">
-      <div className="max-w-7xl mx-auto w-full">
-        
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mb-24"
-        >
-          <h2 className="text-3xl font-bold mb-4 tracking-tight">Selected Engineering Work</h2>
-          <p className="text-gray-400">
-            Evidence-supported outcomes over theoretical architecture.
-          </p>
-        </motion.div>
+    <section id="case-studies" className="relative h-[150vh] px-5 md:px-8">
+      <div className="sticky top-0 h-screen max-w-[1500px] mx-auto flex items-center justify-end">
+        <div className="w-full md:w-[39%] md:mr-[4%]">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ margin: '-25% 0px -25% 0px' }}
+          >
+            <div className="font-mono text-[9px] uppercase tracking-[0.28em] text-white/28 mb-6">04 / evidence</div>
+            <h2 className="text-3xl md:text-5xl leading-[1.03] tracking-[-0.04em] font-medium mb-8">
+              Architecture earns trust<br />when outcomes light up.
+            </h2>
+          </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-8">
-          {CASES.map((study, index) => (
-            <motion.div 
-              key={study.title}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              className="flex flex-col bg-transparent border-t border-white/20 pt-8 relative overflow-hidden group hover:border-white/60 transition-colors"
-            >
-              <div className="absolute -top-10 right-0 p-6 opacity-[0.03] group-hover:opacity-10 transition-opacity">
-                <study.icon className="w-48 h-48" />
-              </div>
-              
-              <div className="text-[10px] font-mono text-green-400 mb-4 tracking-widest uppercase">{study.type}</div>
-              <h3 className="text-2xl font-medium mb-12 relative z-10 tracking-tight">{study.title}</h3>
-              
-              <div className="space-y-6 mb-12 flex-grow relative z-10">
-                <div>
-                  <div className="text-[10px] text-gray-500 uppercase tracking-widest mb-1.5">From / Architecture</div>
-                  <div className="font-mono text-xs text-gray-400">{study.legacy}</div>
+          <div className="space-y-7">
+            {CASES.map((study, index) => (
+              <motion.article
+                key={study.title}
+                initial={{ opacity: 0, x: 18 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ margin: '-15% 0px -15% 0px' }}
+                transition={{ delay: index * 0.08 }}
+                className="border-t border-white/10 pt-4"
+              >
+                <div className="flex items-center justify-between gap-4 mb-2">
+                  <span className="font-mono text-[8px] uppercase tracking-[0.18em] text-white/24">{study.type}</span>
+                  <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-lime-100/60">{study.signal}</span>
                 </div>
-                <div>
-                  <div className="text-[10px] text-gray-500 uppercase tracking-widest mb-1.5">To / Outcome</div>
-                  <div className="font-mono text-xs text-white leading-relaxed">{study.modern}</div>
-                </div>
-              </div>
-              
-              <div className="relative z-10 mt-auto">
-                <div className="text-[10px] text-gray-500 uppercase tracking-widest mb-4">Focus</div>
-                <div className="flex flex-wrap gap-2">
-                  {study.focus.map(item => (
-                    <span key={item} className="px-2 py-1 bg-white/5 text-gray-300 text-[10px] rounded-sm font-mono hover:text-white transition-colors">
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          ))}
+                <h3 className="text-sm md:text-base text-white/82 mb-1">{study.title}</h3>
+                <p className="text-xs leading-relaxed text-white/34 max-w-md">{study.detail}</p>
+              </motion.article>
+            ))}
+          </div>
         </div>
-
       </div>
     </section>
   )

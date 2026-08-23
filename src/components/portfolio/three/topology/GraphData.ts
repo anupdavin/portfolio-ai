@@ -1,130 +1,175 @@
-import * as THREE from 'three';
-
-export type SceneState = 'ORIGIN' | 'SYSTEM_INIT' | 'WORKFLOW' | 'CODEBASE' | 'PRODUCTION' | 'EVIDENCE' | 'HUMAN';
+import * as THREE from 'three'
+import type { SceneState } from '../sceneChoreography'
 
 export interface TopologyNode {
-  id: string;
-  label: string;
-  group: string;
-  positions: Record<SceneState, THREE.Vector3>;
-  visibleIn: SceneState[];
+  id: string
+  label: string
+  group: 'core' | 'workflow' | 'codebase' | 'production' | 'evidence'
+  positions: Record<SceneState, THREE.Vector3>
+  presence: Partial<Record<SceneState, number>>
+  revealAt?: number
 }
 
 export interface TopologyEdge {
-  source: string;
-  target: string;
-  visibleIn: SceneState[];
+  source: string
+  target: string
+  presence: Partial<Record<SceneState, number>>
+  revealAt?: number
 }
 
-// Generate nodes and edges
+const stateOrder: SceneState[] = ['ORIGIN', 'SYSTEM_INIT', 'WORKFLOW', 'CODEBASE', 'PRODUCTION', 'EVIDENCE', 'HUMAN']
+const v = (x: number, y: number, z = 0) => new THREE.Vector3(x, y, z)
+
+function positions(partial: Partial<Record<SceneState, THREE.Vector3>>) {
+  const result = {} as Record<SceneState, THREE.Vector3>
+  let last = v(0, 0, 0)
+  for (const state of stateOrder) {
+    if (partial[state]) last = partial[state]!.clone()
+    result[state] = last.clone()
+  }
+  return result
+}
+
 export function generateTopology() {
-  const nodes: TopologyNode[] = [];
-  const edges: TopologyEdge[] = [];
+  const nodes: TopologyNode[] = []
+  const edges: TopologyEdge[] = []
 
-  const addNode = (id: string, label: string, group: string, positions: Partial<Record<SceneState, THREE.Vector3>>, visibleIn: SceneState[]) => {
-    // Fill missing positions with ORIGIN (0,0,0) or closest state to avoid jumping
-    const fullPositions: Record<SceneState, THREE.Vector3> = {
-      ORIGIN: new THREE.Vector3(0, 0, 0),
-      SYSTEM_INIT: positions.SYSTEM_INIT || new THREE.Vector3(0, 0, 0),
-      WORKFLOW: positions.WORKFLOW || new THREE.Vector3(0, 0, 0),
-      CODEBASE: positions.CODEBASE || new THREE.Vector3(0, 0, 0),
-      PRODUCTION: positions.PRODUCTION || new THREE.Vector3(0, 0, 0),
-      EVIDENCE: positions.EVIDENCE || new THREE.Vector3(0, 0, 0),
-      HUMAN: positions.HUMAN || new THREE.Vector3(0, 0, 0),
-    };
-    
-    // Smooth out missing positions by carrying over from previous states if not explicitly defined
-    const stateOrder: SceneState[] = ['ORIGIN', 'SYSTEM_INIT', 'WORKFLOW', 'CODEBASE', 'PRODUCTION', 'EVIDENCE', 'HUMAN'];
-    let lastValidPos = new THREE.Vector3(0,0,0);
-    for (const state of stateOrder) {
-        if (positions[state]) {
-            lastValidPos = positions[state]!;
-            fullPositions[state] = lastValidPos;
-        } else {
-            fullPositions[state] = lastValidPos.clone();
-        }
-    }
+  const addNode = (
+    id: string,
+    label: string,
+    group: TopologyNode['group'],
+    nodePositions: Partial<Record<SceneState, THREE.Vector3>>,
+    presence: Partial<Record<SceneState, number>>,
+    revealAt?: number,
+  ) => nodes.push({ id, label, group, positions: positions(nodePositions), presence, revealAt })
 
-    nodes.push({ id, label, group, positions: fullPositions, visibleIn });
-  };
+  const addEdge = (
+    source: string,
+    target: string,
+    presence: Partial<Record<SceneState, number>>,
+    revealAt?: number,
+  ) => edges.push({ source, target, presence, revealAt })
 
-  const addEdge = (source: string, target: string, visibleIn: SceneState[]) => {
-    edges.push({ source, target, visibleIn });
-  };
+  addNode(
+    'core',
+    'SYSTEM',
+    'core',
+    {
+      ORIGIN: v(0, 0, 0),
+      SYSTEM_INIT: v(-0.7, 0.15, 0),
+      WORKFLOW: v(-5.4, 0, -0.3),
+      CODEBASE: v(0, 4.5, -1.8),
+      PRODUCTION: v(0, 2.2, 0),
+      EVIDENCE: v(0, 2.2, 0),
+      HUMAN: v(0, 0, 0),
+    },
+    { ORIGIN: 0.85, SYSTEM_INIT: 1, WORKFLOW: 0.7, CODEBASE: 0.4, PRODUCTION: 0.28, EVIDENCE: 0.18, HUMAN: 0.9 },
+  )
 
-  // 1. Core/Origin
-  addNode('core', 'SYSTEM', 'core', {
-    ORIGIN: new THREE.Vector3(0, 0, 0),
-    SYSTEM_INIT: new THREE.Vector3(0, 0, 0),
-    WORKFLOW: new THREE.Vector3(-6, 0, -2), // Move out of way
-    CODEBASE: new THREE.Vector3(0, 4, -5),
-    PRODUCTION: new THREE.Vector3(0, 8, -10),
-    HUMAN: new THREE.Vector3(0, 0, 0),
-  }, ['SYSTEM_INIT', 'WORKFLOW', 'CODEBASE', 'PRODUCTION', 'EVIDENCE', 'HUMAN']);
+  const workflow = [
+    ['UNDERSTAND', -4.2, 0.6],
+    ['PLAN', -2.8, -0.15],
+    ['CHALLENGE', -1.35, 0.55],
+    ['BUILD', 0.1, -0.45],
+    ['VERIFY', 1.55, 0.35],
+    ['OBSERVE', 3, -0.2],
+    ['LEARN', 4.45, 0.45],
+  ] as const
 
-  // 2. Workflow Nodes
-  const workflowSteps = ['UNDERSTAND', 'PLAN', 'CHALLENGE', 'IMPLEMENT', 'VERIFY', 'OBSERVE', 'LEARN'];
-  workflowSteps.forEach((step, i) => {
-    const x = -3 + i * 1.5;
-    const y = Math.sin(i * 0.8) * 0.5;
-    addNode(`wf_${step}`, step, 'workflow', {
-      SYSTEM_INIT: new THREE.Vector3((Math.random()-0.5)*2, (Math.random()-0.5)*2, (Math.random()-0.5)*2),
-      WORKFLOW: new THREE.Vector3(x, y, 0),
-      CODEBASE: new THREE.Vector3(x, 2, -5), // Move back and up
-    }, ['SYSTEM_INIT', 'WORKFLOW']);
-    
-    if (i > 0) {
-      addEdge(`wf_${workflowSteps[i-1]}`, `wf_${step}`, ['WORKFLOW']);
-    } else {
-      addEdge('core', `wf_${step}`, ['WORKFLOW', 'SYSTEM_INIT']);
-    }
-  });
+  workflow.forEach(([label, x, y], index) => {
+    const id = `wf_${label.toLowerCase()}`
+    addNode(
+      id,
+      label,
+      'workflow',
+      {
+        ORIGIN: v(-0.2 + index * 0.04, 0, 0),
+        SYSTEM_INIT: v(-0.2 + index * 0.22, (index % 2 === 0 ? 1 : -1) * (0.18 + index * 0.035), -index * 0.03),
+        WORKFLOW: v(x, y, 0),
+        CODEBASE: v(x * 0.28, y * 0.25 - 2.8, -2.5),
+      },
+      { SYSTEM_INIT: index < 2 ? 0.75 : 0.25, WORKFLOW: 1, CODEBASE: 0 },
+      0.2 + index * 0.023,
+    )
+    if (index === 0) addEdge('core', id, { SYSTEM_INIT: 0.6, WORKFLOW: 0.8 }, 0.19)
+    if (index > 0) addEdge(`wf_${workflow[index - 1][0].toLowerCase()}`, id, { WORKFLOW: 0.9 }, 0.2 + index * 0.023)
+  })
 
-  // 3. Codebase Nodes
-  const codebaseLayers = [
-    { id: 'cb_ui', label: 'React', y: 3 },
-    { id: 'cb_api', label: 'Spring Boot', y: 1.5 },
-    { id: 'cb_events', label: 'Kafka', y: 0 },
-    { id: 'cb_data', label: 'Postgres', y: -1.5 },
-    { id: 'cb_ai', label: 'AI Retrieval', y: -3 },
-  ];
-  
-  codebaseLayers.forEach((layer, i) => {
-    addNode(layer.id, layer.label, 'codebase', {
-      WORKFLOW: new THREE.Vector3(0, -2, 2), // hidden below
-      CODEBASE: new THREE.Vector3(0, layer.y, 0),
-      PRODUCTION: new THREE.Vector3(0, layer.y, 0), // stays same
-      EVIDENCE: new THREE.Vector3(0, layer.y, 0),
-    }, ['CODEBASE', 'PRODUCTION', 'EVIDENCE']);
-    
-    if (i > 0) {
-      addEdge(codebaseLayers[i-1].id, layer.id, ['CODEBASE', 'PRODUCTION', 'EVIDENCE']);
-    }
-  });
+  const codebase = [
+    ['cb_ui', 'REACT / UI', 3.2, -0.45],
+    ['cb_services', 'JAVA / SERVICES', 2.0, 0.45],
+    ['cb_events', 'KAFKA / EVENTS', 0.75, -0.35],
+    ['cb_data', 'DATA / MDM', -0.55, 0.3],
+    ['cb_ai', 'AI / RETRIEVAL', -1.85, -0.25],
+    ['cb_platform', 'KUBERNETES / PLATFORM', -3.2, 0.15],
+  ] as const
 
-  // 4. Production Nodes (The scale reveal)
-  const prodNodes = [
-    { id: 'pd_client', label: 'CLIENT', pos: new THREE.Vector3(-4, 3, 2) },
-    { id: 'pd_auth', label: 'SECURITY', pos: new THREE.Vector3(4, 2, 2) },
-    { id: 'pd_mdm', label: 'MDM', pos: new THREE.Vector3(4, -1, 1) },
-    { id: 'pd_obs', label: 'OBSERVABILITY', pos: new THREE.Vector3(-5, 0, 0) },
-    { id: 'pd_k8s', label: 'KUBERNETES', pos: new THREE.Vector3(0, -5, -2) },
-  ];
+  codebase.forEach(([id, label, y, x], index) => {
+    addNode(
+      id,
+      label,
+      'codebase',
+      {
+        WORKFLOW: v(0, -2.9, -2),
+        CODEBASE: v(x, y, 0),
+        PRODUCTION: v(x * 0.55, y * 0.5, 0),
+        EVIDENCE: v(x * 0.55, y * 0.5, 0),
+        HUMAN: v(0, 0, -4),
+      },
+      { CODEBASE: 1, PRODUCTION: 0.9, EVIDENCE: 0.72, HUMAN: 0 },
+      0.41 + index * 0.014,
+    )
+    if (index > 0) addEdge(codebase[index - 1][0], id, { CODEBASE: 0.8, PRODUCTION: 0.6, EVIDENCE: 0.5 }, 0.42 + index * 0.012)
+  })
 
-  prodNodes.forEach((node) => {
-    addNode(node.id, node.label, 'production', {
-      CODEBASE: new THREE.Vector3(0, 0, 0), // originate from center
-      PRODUCTION: node.pos,
-      EVIDENCE: node.pos,
-    }, ['PRODUCTION', 'EVIDENCE']);
-    
-    // Connect to relevant codebase layers
-    if (node.id === 'pd_client') addEdge('pd_client', 'cb_ui', ['PRODUCTION', 'EVIDENCE']);
-    if (node.id === 'pd_auth') addEdge('pd_auth', 'cb_api', ['PRODUCTION', 'EVIDENCE']);
-    if (node.id === 'pd_mdm') addEdge('pd_mdm', 'cb_data', ['PRODUCTION', 'EVIDENCE']);
-    if (node.id === 'pd_obs') addEdge('pd_obs', 'cb_api', ['PRODUCTION', 'EVIDENCE']);
-    if (node.id === 'pd_k8s') addEdge('cb_data', 'pd_k8s', ['PRODUCTION', 'EVIDENCE']);
-  });
+  const production = [
+    ['pd_client', 'CLIENT', -7.2, 3.4, 1.1, 'cb_ui'],
+    ['pd_security', 'SECURITY', 7.3, 2.7, 0.3, 'cb_services'],
+    ['pd_mdm', 'MASTER DATA', 6.3, -0.1, 1.4, 'cb_data'],
+    ['pd_observe', 'OBSERVABILITY', -7.5, -1.9, -0.4, 'cb_services'],
+    ['pd_delivery', 'DELIVERY / CI', 7.1, -3.2, -1.2, 'cb_platform'],
+    ['pd_runtime', 'RUNTIME', -1.8, -5.4, -3.2, 'cb_platform'],
+    ['pd_guardrails', 'AI GUARDRAILS', -5.4, 1.0, 1.9, 'cb_ai'],
+  ] as const
 
-  return { nodes, edges };
+  production.forEach(([id, label, x, y, z, target], index) => {
+    addNode(
+      id,
+      label,
+      'production',
+      {
+        CODEBASE: v(0, 0, -1.2),
+        PRODUCTION: v(x, y, z),
+        EVIDENCE: v(x, y, z),
+        HUMAN: v(0, 0, -5),
+      },
+      { PRODUCTION: 1, EVIDENCE: 0.72, HUMAN: 0 },
+      0.59 + index * 0.015,
+    )
+    addEdge(id, target, { PRODUCTION: 0.62, EVIDENCE: 0.42 }, 0.59 + index * 0.015)
+  })
+
+  const evidence = [
+    ['ev_mdm', 'JDK 8  →  JDK 21', 6.15, -0.9, 1.8, 'pd_mdm'],
+    ['ev_kafka', 'MULTI-HOUR  →  <20 MIN', -6.6, 0.2, 0.7, 'cb_events'],
+    ['ev_ai', 'EVIDENCE  →  ANSWER  →  EVALUATE', -4.9, 2.15, 2.3, 'pd_guardrails'],
+  ] as const
+
+  evidence.forEach(([id, label, x, y, z, target], index) => {
+    addNode(
+      id,
+      label,
+      'evidence',
+      {
+        PRODUCTION: v(0, 0, -4),
+        EVIDENCE: v(x, y, z),
+        HUMAN: v(0, 0, -5),
+      },
+      { EVIDENCE: 1, HUMAN: 0 },
+      0.78 + index * 0.035,
+    )
+    addEdge(target, id, { EVIDENCE: 0.9 }, 0.78 + index * 0.035)
+  })
+
+  return { nodes, edges }
 }

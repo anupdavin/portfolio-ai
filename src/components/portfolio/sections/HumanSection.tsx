@@ -1,46 +1,37 @@
 import { motion } from 'framer-motion'
 
+const HUMAN_SIGNALS = ['architecture', 'trade-offs', 'ownership', 'mentoring', 'stakeholder alignment', 'regulated delivery'] as const
+
 export default function HumanSection() {
   return (
-    <section id="human" className="min-h-screen py-32 px-6 flex items-center justify-center relative z-10">
-      <div className="max-w-3xl mx-auto text-center space-y-16">
-        
+    <section id="human" className="relative min-h-[120vh] px-5 md:px-8 flex items-center">
+      <div className="max-w-[1500px] mx-auto w-full py-32">
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
-          whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8 }}
-        >
-          <h2 className="text-3xl md:text-5xl font-medium tracking-tight mb-8">
-            The system still needs judgment.
-          </h2>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ delay: 0.2 }}
-          className="flex flex-wrap justify-center gap-x-6 gap-y-4 text-xs md:text-sm text-gray-400 font-mono"
+          viewport={{ margin: '-20% 0px -20% 0px' }}
+          transition={{ duration: 0.8 }}
+          className="max-w-5xl"
         >
-          {[
-            'architecture decisions',
-            'trade-offs',
-            'ownership',
-            'mentoring',
-            'stakeholder alignment',
-            'regulated enterprise environments',
-            'learning and adaptation'
-          ].map((item, i) => (
-            <span key={item} className="flex items-center gap-6">
-              <span>{item}</span>
-              {i < 6 && <span className="w-1 h-1 rounded-full bg-white/20" />}
-            </span>
-          ))}
+          <div className="font-mono text-[9px] uppercase tracking-[0.28em] text-white/24 mb-8">05 / human judgment</div>
+          <h2 className="text-[clamp(3rem,7.4vw,7.7rem)] leading-[0.92] tracking-[-0.06em] font-medium mb-10">
+            Systems still<br />need judgment.
+          </h2>
+          <p className="text-sm md:text-lg leading-relaxed text-white/38 max-w-2xl">
+            Models can accelerate research, coding and review. Responsibility for architecture, trade-offs, people and production outcomes stays human.
+          </p>
         </motion.div>
 
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.25 }}
+          className="mt-20 border-t border-white/10 pt-5 flex flex-wrap gap-x-8 gap-y-3 font-mono text-[9px] uppercase tracking-[0.16em] text-white/22"
+        >
+          {HUMAN_SIGNALS.map((item) => <span key={item}>{item}</span>)}
+        </motion.div>
       </div>
     </section>
   )
 }
-
