@@ -31,17 +31,28 @@ async function waitForServer() {
   throw new Error(`Preview server did not become ready at ${url}`)
 }
 
+async function waitForApp(page) {
+  await page.waitForSelector('#root', { timeout: 10000 })
+  await page.waitForFunction(
+    () => Boolean(document.querySelector('#root')?.children.length && document.getElementById('origin')),
+    { timeout: 10000 },
+  )
+  await sleep(500)
+}
+
 async function captureSet(browser, name, viewport, reducedMotion = false) {
   const page = await browser.newPage()
   const pageErrors = []
 
   await page.setViewport(viewport)
+  page.setDefaultNavigationTimeout(20000)
   if (reducedMotion) {
     await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }])
   }
 
   page.on('pageerror', (error) => pageErrors.push(error.message))
-  await page.goto(url, { waitUntil: 'networkidle2' })
+  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 })
+  await waitForApp(page)
 
   for (const [label, progress] of checkpoints) {
     await page.evaluate((p) => {
@@ -49,7 +60,7 @@ async function captureSet(browser, name, viewport, reducedMotion = false) {
       const end = human ? human.offsetTop : document.documentElement.scrollHeight
       window.scrollTo({ top: end * p, behavior: 'instant' })
     }, progress)
-    await sleep(reducedMotion ? 80 : 550)
+    await sleep(reducedMotion ? 120 : 650)
     await page.screenshot({
       path: resolve(outputDir, `${name}-${label}.png`),
       fullPage: false,
