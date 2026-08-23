@@ -2,6 +2,7 @@ import { useMemo, useRef } from 'react'
 import { Billboard, Line, Text } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+import type { Line2 } from 'three/examples/jsm/lines/Line2.js'
 import { generateTopology, type TopologyEdge } from './GraphData'
 import DataPulses from './DataPulses'
 import { getCinematicProgress, getSceneBlend, smoothstep, statePresence } from '../sceneChoreography'
@@ -109,7 +110,7 @@ function ConnectionLine({
   edge: TopologyEdge
   nodePositions: Record<string, THREE.Vector3>
 }) {
-  const lineRef = useRef<THREE.Line<THREE.BufferGeometry, THREE.Material>>(null)
+  const lineRef = useRef<Line2>(null)
 
   useFrame((_, delta) => {
     const line = lineRef.current
