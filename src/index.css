@@ -1,0 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --color-green-400: #4ade80;
+  --color-green-500: #22c55e;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body { 
+  margin: 0; 
+  font-family: 'Inter', sans-serif; 
+  background: #050505; 
+  color: #ffffff; 
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.glow-text { text-shadow: 0 0 10px currentColor, 0 0 20px currentColor; }
+.glow-border { box-shadow: 0 0 10px rgba(34,197,94,.1), inset 0 0 10px rgba(34,197,94,.05); }
+.code-block { background: rgba(0,0,0,.8); border: 1px solid rgba(34,197,94,.1); backdrop-filter: blur(10px); }
+
+@keyframes terminal-blink { 0%,50%{opacity:1} 51%,100%{opacity:0} }
+.terminal-cursor::after { content: '_'; color: #22c55e; animation: terminal-blink 1s infinite; }
+
