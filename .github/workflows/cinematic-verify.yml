@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - feat/cinematic-landing-orchestration
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
