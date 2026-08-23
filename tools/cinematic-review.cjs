@@ -6,7 +6,7 @@ const puppeteer = require('puppeteer')
 const root = resolve(__dirname, '..')
 const outputDir = resolve(root, '.cinematic-review')
 const port = 4173
-const url = `http://127.0.0.1:${port}`
+const url = `http://127.0.0.1:${port}/portfolio-ai/`
 
 const checkpoints = [
   ['origin', 0.02],
