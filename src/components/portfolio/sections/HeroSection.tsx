@@ -1,65 +1,68 @@
-import { motion } from 'framer-motion'
-import { ArrowDown } from 'lucide-react'
+import { useRef } from 'react'
+import { motion, useScroll, useTransform } from 'framer-motion'
+import { ArrowDownRight } from 'lucide-react'
 
 export default function HeroSection() {
-  return (
-    <section className="min-h-screen flex flex-col justify-center relative overflow-hidden px-6 pt-20 pb-10">
-      <div className="max-w-7xl mx-auto w-full z-10 flex-grow flex flex-col justify-center">
-        <div className="max-w-4xl">
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.5 }}
-            className="text-[10px] md:text-xs font-mono text-gray-500 mb-8 tracking-[0.2em] uppercase"
-          >
-            System / Initializing
-          </motion.div>
-          
-          <motion.h2 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 1.5 }}
-            className="text-base md:text-lg text-white font-medium mb-12 tracking-wide"
-          >
-            Anup Davin Mathivanan
-          </motion.h2>
-          
-          <motion.h1 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 2.0 }}
-            className="text-3xl md:text-5xl font-medium leading-[1.2] mb-8 text-white tracking-tight"
-          >
-            I design systems where <br className="hidden md:block"/> software, data, and intelligence <br className="hidden md:block"/> work as one.
-          </motion.h1>
+  const sectionRef = useRef<HTMLElement>(null)
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start start', 'end start'],
+  })
 
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 2.5 }}
-            className="text-xs md:text-sm font-mono text-gray-500 max-w-2xl leading-relaxed"
+  const systemOpacity = useTransform(scrollYProgress, [0, 0.1, 0.7, 1], [0.35, 1, 0.75, 0])
+  const identityOpacity = useTransform(scrollYProgress, [0.08, 0.18, 0.62, 0.82], [0, 1, 1, 0])
+  const identityY = useTransform(scrollYProgress, [0.08, 0.22], [24, 0])
+  const statementOpacity = useTransform(scrollYProgress, [0.2, 0.34, 0.7, 0.88], [0, 1, 1, 0])
+  const statementY = useTransform(scrollYProgress, [0.2, 0.38], [34, 0])
+  const detailsOpacity = useTransform(scrollYProgress, [0.36, 0.48, 0.78, 0.92], [0, 1, 1, 0])
+
+  return (
+    <section ref={sectionRef} id="origin" className="relative h-[165vh] px-5 md:px-8">
+      <div className="sticky top-0 h-screen max-w-[1500px] mx-auto overflow-hidden">
+        <motion.div
+          style={{ opacity: systemOpacity }}
+          className="absolute top-7 left-0 md:left-4 font-mono text-[9px] md:text-[10px] tracking-[0.28em] text-white/40 uppercase"
+        >
+          <span className="inline-block w-1.5 h-1.5 mr-3 bg-lime-300/80 align-middle shadow-[0_0_16px_rgba(190,242,100,0.45)]" />
+          system / online
+        </motion.div>
+
+        <motion.div
+          style={{ opacity: identityOpacity, y: identityY }}
+          className="absolute left-0 md:left-[7%] top-[19%] md:top-[21%] max-w-xl"
+        >
+          <div className="font-mono text-[10px] uppercase tracking-[0.26em] text-white/35 mb-3">Architect / operator</div>
+          <h2 className="text-[13px] md:text-sm tracking-[0.08em] uppercase text-white/78">Anup Davin Mathivanan</h2>
+        </motion.div>
+
+        <motion.div
+          style={{ opacity: statementOpacity, y: statementY }}
+          className="absolute left-0 md:left-[7%] bottom-[22%] md:bottom-[17%] max-w-4xl"
+        >
+          <h1 className="text-[clamp(2.5rem,6.7vw,6.8rem)] leading-[0.94] tracking-[-0.055em] font-medium text-white">
+            Software. Data.<br />Intelligence.<br />One system.
+          </h1>
+        </motion.div>
+
+        <motion.div
+          style={{ opacity: detailsOpacity }}
+          className="absolute right-0 md:right-[5%] bottom-[7%] md:bottom-[10%] max-w-sm text-right"
+        >
+          <p className="text-xs md:text-sm leading-relaxed text-white/48 mb-5">
+            Principal AI-native platform engineering across distributed systems, data &amp; MDM, cloud and enterprise modernization.
+          </p>
+          <a
+            href="#workflow"
+            className="inline-flex items-center gap-3 text-[10px] font-mono uppercase tracking-[0.2em] text-white/70 hover:text-white transition-colors"
           >
-            Java • Distributed Systems • Data & MDM • Cloud Platforms • AI Engineering
-          </motion.div>
+            enter the system <ArrowDownRight className="w-3.5 h-3.5" />
+          </a>
+        </motion.div>
+
+        <div className="absolute right-0 top-7 font-mono text-[9px] text-white/20 tracking-[0.18em] hidden md:block">
+          09+ YEARS / BUILD → OPERATE → MODERNIZE
         </div>
       </div>
-      
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1, delay: 4 }}
-        className="max-w-7xl mx-auto w-full flex justify-between items-end pb-8"
-      >
-        <div className="text-xs text-gray-600 font-mono">
-          Principal AI-Native Platform Architect<br/>
-          9+ years building enterprise systems
-        </div>
-        <div className="flex flex-col items-center gap-2 text-gray-600">
-          <span className="text-[10px] font-mono uppercase tracking-widest">Scroll to explore</span>
-          <ArrowDown className="w-4 h-4 animate-bounce opacity-50" />
-        </div>
-      </motion.div>
     </section>
   )
 }
-
